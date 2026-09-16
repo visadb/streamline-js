@@ -14,7 +14,7 @@ Local preparation and an audit report do not imply authorization to publish.
 
 ### Push To `main`
 
-The workflow stages a whitelist and force-publishes it as an orphan `dist` branch. The staged manifest ID is changed to `streamline.js-dist` so it can coexist with the released skin.
+The workflow stages a whitelist and force-publishes it as an orphan `dist` branch. The staged manifest ID is changed to `streamline.js-visa-dist` so it can coexist with the released skin.
 
 The force update is intentional for this generated branch; it is not permission to force-push `main` or another source branch.
 

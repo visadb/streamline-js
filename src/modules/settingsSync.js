@@ -16,6 +16,12 @@ import { logger } from './logger.js';
 
 // Own namespace. NOT 'streamline' — profileManager treats that one as a
 // migration source and deletes keys out of it once they are imported.
+//
+// SHARED with upstream streamline.js by design, so preferences follow the user
+// between the fork and upstream. New keys are safe (each skin syncs only its
+// own SYNCED_KEYS and ignores the rest), but changing the meaning, format, or
+// type of an existing key corrupts the other skin's copy — do that only under
+// a new SETTINGS_NAMESPACE.
 export const SETTINGS_NAMESPACE = 'streamlineSettings';
 
 // Preferences the user set on purpose and would have to hunt through Settings

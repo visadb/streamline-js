@@ -24,6 +24,7 @@ Start with [`docs/AI_REPO_MAP.md`](docs/AI_REPO_MAP.md). Open only the topic not
 - Make related IndexedDB writes in one transaction. Keep summary-first history paging; do not read every full shot for list views.
 - Node tests import DOM-free modules only. Extract pure logic rather than adding jsdom or importing modules that touch `window`, `document`, `localStorage`, or IndexedDB at module load.
 - Never broaden credential persistence or copy secrets into the synchronized Decaid KV namespace.
+- This fork (skin id `streamline.js-visa`) shares the `streamlineSettings` KV namespace with upstream `streamline.js`. Adding a synced setting is safe only under a new, unique key — both skins ignore keys they do not know. Any change to the meaning, format, or type of an existing synced key requires changing `SETTINGS_NAMESPACE` in `src/modules/settingsSync.js` first.
 
 ## Change Discipline
 

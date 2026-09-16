@@ -32,7 +32,7 @@ The action:
    (with the leading `v` stripped — tag `v0.1.0` → version `0.1.0`). This
    means the git tag is the single source of truth for version and you do
    not have to bump `skin-manifest.json` manually before tagging.
-3. Zips the staged whitelist as `streamline.js-v0.1.0.zip`
+3. Zips the staged whitelist as `streamline.js-visa-v0.1.0.zip`
 4. Publishes a GitHub Release with auto-generated notes
 
 Downstream tools consume the release via:
@@ -66,8 +66,10 @@ To add a new top-level path, edit the `Stage whitelist into ./dist` step in
 
 The workflow enforces two invariants before publishing:
 
-1. `dist/skin-manifest.json` exists and declares `id == "streamline.js"` and
-   a non-empty `version` field.
+1. `dist/skin-manifest.json` exists and declares `id == "streamline.js-visa"`
+   (or `"streamline.js-visa-dist"` on dist builds) and a non-empty `version`
+   field. This fork's id is deliberately distinct from upstream's
+   `streamline.js` so both install side by side in Decaid.
 2. No file in `dist/` has a Win32-reserved character (`< > : " | ? *`) in its
    name. Windows `CreateFile` rejects these with `ERROR_INVALID_NAME`, and
    any such file would crash skin installation on Windows.

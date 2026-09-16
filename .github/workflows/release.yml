@@ -68,7 +68,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
-          jq '.id = "streamline.js-dist"' dist/skin-manifest.json > dist/skin-manifest.json.tmp
+          jq '.id = "streamline.js-visa-dist"' dist/skin-manifest.json > dist/skin-manifest.json.tmp
           mv dist/skin-manifest.json.tmp dist/skin-manifest.json
           cat dist/skin-manifest.json
 
@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           test -f dist/skin-manifest.json
-          jq -e '.id == "streamline.js" or .id == "streamline.js-dist"' dist/skin-manifest.json > /dev/null
+          jq -e '.id == "streamline.js-visa" or .id == "streamline.js-visa-dist"' dist/skin-manifest.json > /dev/null
           jq -e '.version' dist/skin-manifest.json > /dev/null
 
 
@@ -105,11 +105,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cd dist
-          zip -r ../streamline.js-${{ github.ref_name }}.zip .
+          zip -r ../streamline.js-visa-${{ github.ref_name }}.zip .
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: streamline.js-${{ github.ref_name }}.zip
+          files: streamline.js-visa-${{ github.ref_name }}.zip
           generate_release_notes: true

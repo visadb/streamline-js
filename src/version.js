@@ -6,4 +6,6 @@
 export const APP_VERSION = '0.1.112';
 
 // Our skin id as registered with Streamline-Bridge (matches manifest.json / reaMetadata.skinId).
-export const SKIN_ID = 'streamline.js';
+// This fork uses its own id so it installs alongside upstream 'streamline.js'
+// instead of overwriting it.
+export const SKIN_ID = 'streamline.js-visa';

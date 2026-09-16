@@ -1,6 +1,6 @@
 {
-  "id": "streamline.js",
-  "name": "Streamline.js",
-  "description": "Modern, feature-complete WebUI skin for Streamline-Bridge",
+  "id": "streamline.js-visa",
+  "name": "Streamline.js (Visa)",
+  "description": "Visa's fork of Streamline.js — modern, feature-complete WebUI skin for Decaid",
   "version": "0.1.112"
 }
