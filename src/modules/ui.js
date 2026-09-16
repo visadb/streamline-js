@@ -4,6 +4,7 @@ import { deriveSleepButtonAction, isWakePending } from './screensaver-policy.js'
 import { isBengleMachine, isBengleModel } from './machine.js';
 import { STEAM_FLOW_PRESETS_BY_MODEL, MILK_STOP_PRESETS, resolveSteamFlowPresetsForModel, resolveSteamTileMode, milkTelemetryValue, steamFlowHighlightIndex, STEAM_SYNC_SYNCED, steamSyncField, foldSteamSyncState, shouldRetrySteamSync } from './steam-mode.js';
 import { shouldUseNumpad } from './numpad-policy.js';
+import { GRIND_STEP, GRIND_STEP_LONG, GRIND_MAX, formatGrind } from './grind-policy.js';
 import { openContextMenu } from './context-menu.js';
 import { logger } from './logger.js';
 import * as chart from './chart.js';
@@ -105,8 +106,6 @@ const API_DEBOUNCE_MS = 1000;
 let lastTileInteractionAt = 0;
 function markTileInteraction() { lastTileInteractionAt = Date.now(); }
 export function msSinceTileInteraction() { return Date.now() - lastTileInteractionAt; }
-
-let grindStep = 0.1;
 
 // How long the steam elapsed counter will pick up where it left off. Covers a
 // dropped/odd status frame; a genuine second steam session is always further
@@ -230,7 +229,7 @@ export function updateTemperatureValue(newValue) {
 export function updateGrindValue(newValue) {
     const workflowUpdate = {
         context: {
-            grinderSetting: parseFloat(newValue).toFixed(2)
+            grinderSetting: formatGrind(newValue)
         }
     };
     updateWorkflow(workflowUpdate).then(() => {
@@ -238,7 +237,7 @@ export function updateGrindValue(newValue) {
     }).catch(error => {
         logger.error('Failed to update grind value:', error);
     });
-    window.app?.saveGrindToActiveProfile?.(parseFloat(newValue).toFixed(2));
+    window.app?.saveGrindToActiveProfile?.(formatGrind(newValue));
 }
 
 export function updateFlushValue(newValue) {
@@ -474,7 +473,7 @@ function toggleHotWaterMode() {
     updateHotWaterPresetDisplay();
 }
 
-function setupValueAdjuster(minusBtnId, plusBtnId, valueElId, step, min, formatter, onUpdate, afterUpdate) {
+function setupValueAdjuster(minusBtnId, plusBtnId, valueElId, step, min, formatter, onUpdate, afterUpdate, options = {}) {
     const minusBtn = document.getElementById(minusBtnId);
     const plusBtn = document.getElementById(plusBtnId);
 
@@ -490,29 +489,31 @@ function setupValueAdjuster(minusBtnId, plusBtnId, valueElId, step, min, formatt
         debounceTimer = setTimeout(() => onUpdate(value), API_DEBOUNCE_MS);
     };
 
-    minusBtn.addEventListener('click', (e) => {
-        flashPlusMinusButton(e.currentTarget);
+    const adjust = (btn, direction, stepValue) => {
+        flashPlusMinusButton(btn);
         const valueEl = document.getElementById(valueElId);
         if (!valueEl) return;
         let currentValue = parseFloat(valueEl.textContent);
-        if (currentValue > min) {
-            currentValue -= getStep();
-            valueEl.textContent = format(currentValue);
-            scheduleUpdate(currentValue);
-            if (afterUpdate) afterUpdate(format(currentValue));
-        }
-    });
-
-    plusBtn.addEventListener('click', (e) => {
-        flashPlusMinusButton(e.currentTarget);
-        const valueEl = document.getElementById(valueElId);
-        if (!valueEl) return;
-        let currentValue = parseFloat(valueEl.textContent);
-        currentValue += getStep();
+        if (direction < 0 && currentValue <= min) return;
+        currentValue = Math.max(min, currentValue + direction * stepValue);
         valueEl.textContent = format(currentValue);
         scheduleUpdate(currentValue);
         if (afterUpdate) afterUpdate(format(currentValue));
-    });
+    };
+
+    // A long-press step wires the buttons through setupPressAndHold: tap =
+    // fine step, hold (or right-click) = coarse step, like the legacy skin.
+    const wire = (btn, direction) => {
+        if (options.longPressStep !== undefined) {
+            setupPressAndHold(btn,
+                () => adjust(btn, direction, getStep()),
+                () => adjust(btn, direction, options.longPressStep));
+        } else {
+            btn.addEventListener('click', () => adjust(btn, direction, getStep()));
+        }
+    };
+    wire(minusBtn, -1);
+    wire(plusBtn, 1);
 }
 
 export const LONG_PRESS_MS = 500;
@@ -2091,16 +2092,15 @@ export function initUI(callbacks) {
     if (grindValueEl) {
         makeEditable(grindValueEl, (newValue) => {
             let value = newValue;
-            if (value > 9999) {
-                alert('Grind setting is limited to 9999.');
-                value = 9999;
+            if (value > GRIND_MAX) {
+                alert(`Grind setting is limited to ${GRIND_MAX}.`);
+                value = GRIND_MAX;
             }
             if (value < 0) {
                 alert('Grind setting must be at least 0.');
                 value = 0;
             }
-            grindStep = Number.isInteger(value) ? 1 : 0.1;
-            grindValueEl.textContent = Number.isInteger(value) ? String(value) : value.toFixed(1);
+            grindValueEl.textContent = formatGrind(value);
             updateGrindValue(value);
         });
     }
@@ -2205,7 +2205,7 @@ export function initUI(callbacks) {
         }
     }
     setupValueAdjuster('dose-in-minus', 'dose-in-plus', 'dose-in-value', 1, 0, (val) => `${val}g`, (val) => { updateDoseValue('in', val); updateDrinkRatio(); }, syncDrinkOutPresets);
-    setupValueAdjuster('grind-minus', 'grind-plus', 'grind-value', () => grindStep, 0, (val) => grindStep === 1 ? String(Math.round(val)) : val.toFixed(1), updateGrindValue);
+    setupValueAdjuster('grind-minus', 'grind-plus', 'grind-value', GRIND_STEP, 0, formatGrind, updateGrindValue, undefined, { longPressStep: GRIND_STEP_LONG });
     setupValueAdjuster('flush-minus', 'flush-plus', 'flush-value', 1, 0, (val) => `${val}s`, (val) => {
         updateFlushValue(val);
         updateFlushDisplay(val);
@@ -2842,8 +2842,7 @@ export function updateGrindDisplay(grinderData) {
     // Prefer grinderSetting over setting (context takes precedence)
     const grindValue = grinderData?.grinderSetting ?? grinderData?.setting;
     if (grindValueEl && grindValue !== undefined) {
-        const parsed = parseFloat(grindValue);
-        grindValueEl.textContent = Number.isInteger(parsed) ? String(parsed) : parsed.toFixed(1);
+        grindValueEl.textContent = formatGrind(grindValue);
     }
 }
 

@@ -10,6 +10,7 @@ import { generateShotSummary } from './shotSummary.js';
 import { openContextMenu } from './context-menu.js';
 import { showToast, setupPressAndHold } from './ui.js';
 import { isVisualizerEnabled, uploadShotToVisualizer } from './visualizer.js';
+import { formatGrind } from './grind-policy.js';
 
 const DEREK_URL = 'https://derek.decentespresso.com/';
 
@@ -180,7 +181,7 @@ async function displayShot(index) {
         const grindSetting = shot.workflow?.context?.grinderSetting ?? shot.workflow?.grinderData?.setting;
         if (typeof grindSetting !== 'undefined' && grindSetting !== null) {
             const settingFloat = parseFloat(grindSetting);
-            grindSizeEl.textContent = !isNaN(settingFloat) ? `Grind ${settingFloat}` : `Grind N/A`;
+            grindSizeEl.textContent = !isNaN(settingFloat) ? `Grind ${formatGrind(settingFloat)}` : `Grind N/A`;
         } else {
             grindSizeEl.textContent = `Grind N/A`;
         }

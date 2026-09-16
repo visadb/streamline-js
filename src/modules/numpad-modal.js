@@ -250,24 +250,41 @@ function updateDisplay() {
         `${currentValue}<span class="numpad-modal-input-cursor"></span><span class="numpad-unit-text">${config.unit}</span>`;
 }
 
+// Entry limits are per field: most fields keep the historic 5-character cap,
+// grind allows three decimal places (legacy skin parity) and enough room to
+// type them after a multi-digit integer part.
+function entryLimits() {
+    const config = currentConfig || fieldConfig[currentFieldType] || {};
+    return {
+        maxLength: config.maxLength ?? 5,
+        decimalPlaces: config.decimalPlaces ?? null,
+    };
+}
+
 function handleNumberClick(num) {
+    const { maxLength, decimalPlaces } = entryLimits();
     if (isFirstInput) {
         currentValue = num;
         isFirstInput = false;
     } else if (currentValue === '0' || currentValue === '') {
         currentValue = num;
-    } else if (currentValue.length < 5) {
+    } else if (currentValue.length < maxLength) {
+        const decimals = currentValue.split('.')[1];
+        if (decimalPlaces !== null && decimals !== undefined && decimals.length >= decimalPlaces) {
+            return;
+        }
         currentValue = currentValue + num;
     }
     updateDisplay();
 }
 
 function handleDecimalClick() {
+    const { maxLength } = entryLimits();
     if (isFirstInput) {
         currentValue = '0.';
         isFirstInput = false;
         updateDisplay();
-    } else if (!currentValue.includes('.') && currentValue.length < 5) {
+    } else if (!currentValue.includes('.') && currentValue.length < maxLength) {
         currentValue = currentValue + '.';
         updateDisplay();
     }
@@ -343,7 +360,7 @@ const fieldConfig = {
     'dose-in': { title: 'DOSE', unit: 'g', defaultValue: '20', label: 'Input value between 1–120' },
     'drink-out': { title: 'DRINK OUT', unit: 'g', defaultValue: '40', label: 'Input value between 1–200' },
     'temperature': { title: 'TEMPERATURE', unit: '°c', defaultValue: '93', label: 'Input value between 70–110' },
-    'grind': { title: 'GRIND', unit: '', defaultValue: '1', label: 'Input value between 0–9999' },
+    'grind': { title: 'GRIND', unit: '', defaultValue: '1', label: 'Input value between 0–9999', maxLength: 8, decimalPlaces: 3 },
     'steam-duration': { title: 'STEAM DURATION', unit: 's', defaultValue: '30', label: 'Input value 0–120 (0 = steam off)' },
     'steam-flow': { title: 'STEAM FLOW', unit: 'ml/s', defaultValue: '1.0', label: 'Input value between 0.1–10.0' },
     'flush': { title: 'FLUSH', unit: 's', defaultValue: '5', label: 'Input value 0–60 (0 = no flush)' },
