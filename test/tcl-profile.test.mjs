@@ -1,7 +1,7 @@
 // Legacy de1app/Visualizer .tcl profile → this app's JSON profile shape.
 // src/modules/tcl-profile.js is DOM-free, so it's imported directly rather
 // than source-sliced like the tests for profile_editor.js itself.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { parseTclProfile, isLikelyTclProfile } from '../src/modules/tcl-profile.js';
@@ -77,11 +77,14 @@ function buildProfile(topOverrides = {}, steps = [buildStep()]) {
 
 // ─── Real sample file, end to end ──────────────────────────────────────────
 
-test('parses the bundled real Visualizer .tcl sample end to end', () => {
-    const text = readFileSync(
-        new URL('../shots/Visualizer_JW ASL 2 from Visualizer.tcl', import.meta.url),
-        'utf8',
-    );
+// The sample .tcl is not tracked in git, so this checkout may not have it.
+// Skip instead of fail; the test runs wherever the file is present.
+const SAMPLE_TCL_URL = new URL('../shots/Visualizer_JW ASL 2 from Visualizer.tcl', import.meta.url);
+
+test('parses the bundled real Visualizer .tcl sample end to end', {
+    skip: existsSync(SAMPLE_TCL_URL) ? false : 'sample .tcl not present in this checkout',
+}, () => {
+    const text = readFileSync(SAMPLE_TCL_URL, 'utf8');
     const profile = parseTclProfile(text);
     assertValidatesAsProfile(profile);
 
