@@ -14,6 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      # Fail fast: nothing gets staged, deployed, or released if tests fail.
+      # The suite is dependency-free (node:test only), so no npm ci needed.
+      - name: Run tests
+        run: npm test
+
       - name: Sync translations from Google Sheets
         env:
           TRANSLATIONS_URL: ${{ secrets.TRANSLATIONS_SHEET_URL }}
