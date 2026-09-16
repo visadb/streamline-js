@@ -8,6 +8,7 @@
     "build:echarts": "esbuild scripts/echarts-streamline-entry.js --bundle --format=esm --minify --outfile=src/modules/echarts-streamline.min.js",
     "build": "npm run build:css && npm run build:echarts",
     "watch:css": "tailwindcss -i ./src/input.css -o ./src/css/app.css --watch",
+    "serve": "npm run build && (sleep 1 && open http://localhost:8000 &); python3 -m http.server 8000",
     "test": "node --test"
   },
   "repository": {
